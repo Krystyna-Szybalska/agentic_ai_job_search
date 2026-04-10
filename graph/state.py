@@ -9,5 +9,4 @@ class JobSearchState(TypedDict):
     matched_jobs: list          # dicts with llm_score + analysis
     critic_feedback: str
     validated_jobs: list        # final ranked list after critic
-    human_approved: bool
     report_path: str

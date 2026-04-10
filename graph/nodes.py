@@ -6,9 +6,9 @@ from agents.matching_agent import analyze_job
 from agents.critic_agent import critique_matches
 from utils.report_generator import generate_report
 from config.settings import (
-    OLLAMA_MODEL, TOP_K, TOP_N_FOR_CRITIC, VECTOR_STORE_PATH, OUTPUTS_DIR
+    TOP_K, TOP_N_FOR_CRITIC, VECTOR_STORE_PATH, OUTPUTS_DIR,
+    EMBEDDING_DIMENSION, get_llm,
 )
-from langchain_ollama import OllamaLLM
 
 
 def parse_cv(state: JobSearchState) -> dict:
@@ -23,14 +23,14 @@ def embed_cv(state: JobSearchState) -> dict:
 
 
 def retrieve_jobs(state: JobSearchState) -> dict:
-    store = VectorStore(dimension=384)
+    store = VectorStore(dimension=EMBEDDING_DIMENSION)
     store.load(VECTOR_STORE_PATH)
     results = store.query(state["cv_embedding"], k=TOP_K)
     return {"retrieved_jobs": results}
 
 
 def matching_agent(state: JobSearchState) -> dict:
-    llm = OllamaLLM(model=OLLAMA_MODEL, num_predict=1024)
+    llm = get_llm()
     matched = []
     for job in state["retrieved_jobs"]:
         print(f"  Analyzing: {job.get('positionName', '')} at {job.get('company', '')}...")
@@ -41,16 +41,10 @@ def matching_agent(state: JobSearchState) -> dict:
 
 
 def critic_agent(state: JobSearchState) -> dict:
-    llm = OllamaLLM(model=OLLAMA_MODEL, num_predict=1024)
+    llm = get_llm()
     top_jobs = state["matched_jobs"][:TOP_N_FOR_CRITIC]
     validated, feedback = critique_matches(state["cv_text"], top_jobs, llm)
     return {"validated_jobs": validated, "critic_feedback": feedback}
-
-
-def human_review(state: JobSearchState) -> dict:
-    # This node is reached after the INTERRUPT in graph_builder.
-    # The graph resumes here after user input is provided via main.py.
-    return {}
 
 
 def generate_report_node(state: JobSearchState) -> dict:

@@ -7,7 +7,6 @@ from graph.nodes import (
     retrieve_jobs,
     matching_agent,
     critic_agent,
-    human_review,
     generate_report_node,
 )
 
@@ -20,7 +19,6 @@ def build_graph():
     builder.add_node("retrieve_jobs", retrieve_jobs)
     builder.add_node("matching_agent", matching_agent)
     builder.add_node("critic_agent", critic_agent)
-    builder.add_node("human_review", human_review)
     builder.add_node("generate_report", generate_report_node)
 
     builder.add_edge(START, "parse_cv")
@@ -28,8 +26,7 @@ def build_graph():
     builder.add_edge("embed_cv", "retrieve_jobs")
     builder.add_edge("retrieve_jobs", "matching_agent")
     builder.add_edge("matching_agent", "critic_agent")
-    builder.add_edge("critic_agent", "human_review")
-    builder.add_edge("human_review", "generate_report")
+    builder.add_edge("critic_agent", "generate_report")
     builder.add_edge("generate_report", END)
 
     checkpointer = MemorySaver()

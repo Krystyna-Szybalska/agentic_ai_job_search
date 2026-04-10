@@ -28,37 +28,37 @@ def main(cv_path: str) -> None:
         "matched_jobs": [],
         "critic_feedback": "",
         "validated_jobs": [],
-        "human_approved": False,
         "report_path": "",
     }
 
     print("Starting job search pipeline...")
     print("Step 1/5: Parsing CV...")
 
-    # Run until interrupt (before generate_report)
     for event in graph.stream(initial_state, config, stream_mode="values"):
-        pass  # events stream node outputs; graph pauses at interrupt
+        pass
 
-    state = graph.get_state(config)
-    validated_jobs = state.values.get("validated_jobs", [])
-    critic_feedback = state.values.get("critic_feedback", "")
+    while True:
+        state = graph.get_state(config)
+        validated_jobs = state.values.get("validated_jobs", [])
+        critic_feedback = state.values.get("critic_feedback", "")
 
-    if critic_feedback:
-        print(f"\nCritic says: {critic_feedback}")
+        if critic_feedback:
+            print(f"\nCritic says: {critic_feedback}")
 
-    display_results(validated_jobs)
+        display_results(validated_jobs)
 
-    decision = input("\nAccept these results and generate report? (yes/no): ").strip().lower()
+        decision = input("\nAccept these results and generate report? (yes/no): ").strip().lower()
 
-    if decision == "yes":
-        graph.invoke(None, config)
-        final_state = graph.get_state(config)
-        print(f"\nDone! Report saved to: {final_state.values.get('report_path', 'outputs/')}")
-    else:
+        if decision == "yes":
+            graph.invoke(None, config)
+            final_state = graph.get_state(config)
+            print(f"\nDone! Report saved to: {final_state.values.get('report_path', 'outputs/')}")
+            break
+
         print("Restarting matching with fresh analysis...")
-        # Reset matched jobs and retry from matching_agent
         graph.update_state(config, {"matched_jobs": [], "validated_jobs": []}, as_node="retrieve_jobs")
-        graph.invoke(None, config)
+        for event in graph.stream(None, config, stream_mode="values"):
+            pass
 
 
 if __name__ == "__main__":
