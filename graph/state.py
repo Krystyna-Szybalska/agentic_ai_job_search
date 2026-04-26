@@ -10,3 +10,4 @@ class JobSearchState(TypedDict):
     critic_feedback: str
     validated_jobs: list        # final ranked list after critic
     report_path: str
+    remotive_search: str  # mutable per-run search query for Remotive API

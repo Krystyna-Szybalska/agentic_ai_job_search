@@ -1,6 +1,10 @@
+import logging
+
 from config.prompts import CRITIC_PROMPT
 from config.settings import CV_TEXT_MAX_CHARS
 from utils.llm_parsing import parse_llm_json, extract_json_field, strip_code_fences
+
+logger = logging.getLogger(__name__)
 
 
 def critique_matches(cv_text: str, matched_jobs: list[dict], llm) -> tuple[list[dict], str]:
@@ -16,7 +20,9 @@ def critique_matches(cv_text: str, matched_jobs: list[dict], llm) -> tuple[list[
         matched_jobs_summary=matched_jobs_summary,
     )
 
+    logger.debug("Prompt to LLM (critic):\n%s", prompt)
     raw_response = llm.invoke(prompt)
+    logger.debug("Raw LLM response (critic):\n%s", raw_response)
     jobs_by_id = {job["id"]: job for job in matched_jobs}
 
     parsed = parse_llm_json(raw_response)

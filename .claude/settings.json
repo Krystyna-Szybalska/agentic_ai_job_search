@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c ':*)",
+      "Bash(python -m pytest tests/test_remotive_client.py -v)",
+      "Bash(python -m pytest tests/test_nodes.py::test_fetch_remote_jobs_node -v)",
+      "Bash(python -m pytest tests/test_nodes.py -v)",
+      "Bash(python -m pytest tests/test_graph_builder.py -v)",
+      "Bash(python -c \"from config.settings import JOB_SOURCE, REMOTIVE_SEARCH, REMOTIVE_LIMIT; print\\(f'JOB_SOURCE={JOB_SOURCE}, REMOTIVE_SEARCH={repr\\(REMOTIVE_SEARCH\\)}, REMOTIVE_LIMIT={REMOTIVE_LIMIT}'\\)\")",
+      "Bash(python -c \"from tools.remotive_client import fetch_remotive_jobs, normalize_remotive_job; print\\('remotive_client import OK'\\)\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('TYPE:', type\\(d\\).__name__\\); item = d[0] if isinstance\\(d, list\\) else list\\(d.values\\(\\)\\)[0]; print\\('SAMPLE KEYS:', list\\(item.keys\\(\\)\\) if isinstance\\(item, dict\\) else 'not dict'\\); print\\('SAMPLE:', json.dumps\\(item, indent=2\\)[:800] if isinstance\\(item, dict\\) else item\\)\")",
+      "Bash(python -c \"import json; d=json.load\\(open\\('data/processed/jobs_dataset.json'\\)\\); item = d[0] if isinstance\\(d, list\\) else list\\(d.values\\(\\)\\)[0]; print\\('LEN:', len\\(d\\)\\); print\\('KEYS:', list\\(item.keys\\(\\)\\)\\); print\\('SAMPLE:', json.dumps\\(item, indent=2\\)[:1200]\\)\")",
+      "Bash(pytest tests/test_logging_config.py -v)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Krysia\\Documents\\Moje dokumenty\\Projekty\\Agentic AI Job Search\\agentic_ai_job_search\\docs\\plans"
+    ]
+  }
+}

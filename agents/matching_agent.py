@@ -1,3 +1,5 @@
+import logging
+
 from config.prompts import MATCHING_PROMPT
 from config.settings import CV_TEXT_MAX_CHARS, JOB_DESC_MAX_CHARS
 from utils.llm_parsing import (
@@ -8,6 +10,8 @@ from utils.llm_parsing import (
     clamp_score,
     sanitize_string_list,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def analyze_job(cv_text: str, job: dict, llm) -> dict:
@@ -21,7 +25,10 @@ def analyze_job(cv_text: str, job: dict, llm) -> dict:
         job_description=job.get("description", "")[:JOB_DESC_MAX_CHARS],
     )
 
+    logger.debug("Prompt to LLM (matching, job=%s):\n%s", job.get("id", "?"), prompt)
     raw_response = llm.invoke(prompt)
+    logger.debug("Raw LLM response (matching, job=%s):\n%s", job.get("id", "?"), raw_response)
+
     result = dict(job)
 
     parsed = parse_llm_json(raw_response)

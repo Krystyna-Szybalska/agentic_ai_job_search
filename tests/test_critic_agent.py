@@ -1,4 +1,6 @@
+import logging
 from unittest.mock import MagicMock
+
 from agents.critic_agent import critique_matches
 
 
@@ -27,3 +29,21 @@ def test_critique_fallback_on_invalid_json():
 
     assert len(validated) == 1  # returns original order
     assert isinstance(feedback, str)
+
+
+def test_critique_matches_logs_prompt_and_response_at_debug(caplog):
+    cv = "Python developer"
+    matched = [{"id": "1", "positionName": "Dev", "company": "Acme", "llm_score": 7}]
+    mock_llm = MagicMock()
+    mock_llm.invoke.return_value = '{"verdict": "approved", "feedback": "ok feedback", "suggested_ranking": ["1"]}'
+
+    with caplog.at_level(logging.DEBUG, logger="agents.critic_agent"):
+        critique_matches(cv, matched, mock_llm)
+
+    debug_messages = [r.message for r in caplog.records if r.levelno == logging.DEBUG]
+    prompt_logs = [m for m in debug_messages if "Prompt to LLM" in m]
+    response_logs = [m for m in debug_messages if "Raw LLM response" in m]
+    assert len(prompt_logs) == 1
+    assert len(response_logs) == 1
+    assert "Python developer" in prompt_logs[0]
+    assert "ok feedback" in response_logs[0]

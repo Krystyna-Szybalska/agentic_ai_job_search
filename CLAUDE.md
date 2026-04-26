@@ -2,9 +2,9 @@
 
 ## What this project does
 
-A LangGraph-based multi-agent system that matches a user's CV (PDF) against a dataset of ~735 job listings using local LLM + vector search. Fully offline, no API keys.
+A LangGraph-based multi-agent system that matches a user's CV (PDF) against job listings using local LLM + vector search. Supports two job sources: a local FAISS-indexed dataset (~735 listings) or the Remotive API (live remote job listings). Controlled by the `JOB_SOURCE` config parameter.
 
-**Pipeline:** `parse_cv -> embed_cv -> retrieve_jobs -> matching_agent -> critic_agent -> (interrupt) -> generate_report`
+**Pipeline:** `parse_cv -> (embed_cv -> retrieve_jobs | fetch_remote_jobs) -> matching_agent -> critic_agent -> (interrupt) -> generate_report`
 
 **Entry points:**
 - `python main.py path/to/cv.pdf` — run the full pipeline
@@ -18,12 +18,13 @@ config/settings.py               Environment config (dotenv + defaults), get_llm
 config/prompts.py                LLM prompt templates (matching + critic)
 graph/state.py                   JobSearchState TypedDict (8 fields)
 graph/graph_builder.py           LangGraph StateGraph assembly, MemorySaver, interrupt
-graph/nodes.py                   6 node functions (thin wrappers calling tools/agents)
+graph/nodes.py                   7 node functions (thin wrappers calling tools/agents)
 agents/matching_agent.py         Per-job scoring (1-10), skill extraction, summary
 agents/critic_agent.py           Top-N reranking and validation
 embeddings/embedder.py           SentenceTransformer wrapper (all-MiniLM-L6-v2)
 embeddings/vector_store.py       FAISS IndexFlatIP (cosine via normalized IP)
 tools/pdf_parser.py              pdfplumber text extraction
+tools/remotive_client.py         Remotive API client (fetch + normalize jobs)
 utils/llm_parsing.py             Shared LLM output parsing (JSON extraction, fallbacks)
 utils/report_generator.py        Markdown report output
 scripts/build_vector_store.py    Offline index builder (run via python -m scripts.build_vector_store)
@@ -35,8 +36,9 @@ scripts/build_vector_store.py    Offline index builder (run via python -m script
 - **Graceful JSON fallback:** Shared `utils/llm_parsing.py` handles code fences, json.loads, and regex fallback. Both agents use it. Essential because small LLMs produce malformed JSON.
 - **Context window management:** Truncation limits configurable via `CV_TEXT_MAX_CHARS` / `JOB_DESC_MAX_CHARS` in settings. Increase when switching to larger-context models.
 - **Human-in-the-loop:** LangGraph `interrupt_before=["generate_report"]` pauses for user approval. Rejection retries matching+critic in a loop until the user accepts.
-- **LLM factory:** `get_llm()` in settings.py centralizes OllamaLLM creation. Override params via kwargs.
-- **Fully local:** Ollama for LLM, SentenceTransformers for embeddings, FAISS for vector search. No network dependencies at runtime.
+- **LLM factory:** `get_llm()` in settings.py uses `ChatOllama` (chat API) wrapped to return plain strings. This is required for thinking models like Qwen3 — the generate API doesn't support disabling thinking mode. `OLLAMA_NUM_PREDICT` defaults to 4096 to accommodate thinking tokens.
+- **Dual job source:** `JOB_SOURCE=local` uses the FAISS vector store (offline). `JOB_SOURCE=remotive` fetches live jobs from the Remotive API using `REMOTIVE_SEARCH` as the query. The graph conditionally routes between the two paths at build time.
+- **Local-first:** Ollama for LLM, SentenceTransformers for embeddings, FAISS for vector search. Network only needed when `JOB_SOURCE=remotive`.
 
 ## Tech stack
 
@@ -46,6 +48,7 @@ scripts/build_vector_store.py    Offline index builder (run via python -m script
 - sentence-transformers (all-MiniLM-L6-v2)
 - faiss-cpu (IndexFlatIP, 384 dimensions)
 - pdfplumber
+- requests (Remotive API)
 - pytest
 
 ## Coding conventions

@@ -34,6 +34,10 @@ def generate_report(
             "",
         ]
 
+        url = job.get("url") or job.get("externalApplyLink", "")
+        if url:
+            lines.append(f"[→ See the offer]({url})")
+
         matching = job.get("matching_skills", [])
         if matching:
             lines.append(f"**Matching skills:** {', '.join(matching)}")
